@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>欢迎注册</title>
+    <link href="css/register.css" rel="stylesheet">
+    <script src="js/axios.js"></script>
+</head>
+
+
+<body>
+<div class="form-div">
+    <div class="reg-content">
+        <h1>欢迎注册</h1>
+        <span>已有帐号？</span> <a href="login.html">登录</a>
+    </div>
+    <form id="reg-form" action="#" method="post">
+        <table>
+            <tr>
+                <td>用户名</td>
+                <td class="inputs">
+                    <input name="username" type="text" id="username">
+                    <br>
+                    <span id="username_ok" class="ok_msg" style="display: none">用户名合法</span>
+                    <span id="username_err" class="err_msg" style="display: none">用户名已存在，请重新输入</span>
+                    <span id="username_live" class="err_msg" style="display: none">用户不能为空，请输入</span>
+                </td>
+            </tr>
+
+            <tr>
+                <td>密码</td>
+                <td class="inputs">
+                    <input name="password" type="password" id="password">
+                    <br>
+                    <span id="password_err" class="err_msg" style="display: none">密码必须要5位以上</span>
+
+                </td>
+            </tr>
+
+            <tr>
+                <td>验证码</td>
+                <td class="inputs">
+                    <input name="checkCode" type="text" id="checkCode">
+                    <img src="user/checkCodeImage" id="checkImg">
+                    <a href="#" onclick="reloadImg()" id="changeImg">看不清？</a>
+                </td>
+            </tr>
+        </table>
+        <div class="buttons">
+            <input value="注 册" type="button" id="reg_btn">
+        </div>
+        <br class="clear">
+    </form>
+
+</div>
+
+<script type="application/javascript">
+        //1.用户名框输入后的验证
+        document.getElementById("username").onblur=function () {
+            var name=this.value;
+        //2.使用axios发送请求，处理响应
+
+            axios({
+                method: 'get',
+                url: "http://localhost:8080/fruitmarket/user/selectByName?username="+name,
+
+            })
+                .then(function (response) {
+
+                    if(response.status==200){
+                        if(response.data==true){
+                            document.getElementById("username_ok").style.display='';
+                            document.getElementById("username_err").style.display='none';
+                            document.getElementById("username_live").style.display='none';
+                        }
+                        else{
+                            document.getElementById("username_ok").style.display='none';
+                            document.getElementById("username_err").style.display='';
+                            document.getElementById("username_live").style.display='none';
+                    }if(name==""){
+                            document.getElementById("username_live").style.display='';
+                            document.getElementById("username_ok").style.display='none';
+                            document.getElementById("username_err").style.display='none';
+
+                        }
+
+                }});
+                      }
+                      document.getElementById("password").onblur=function(){
+            var pass=this.value;
+            if(pass.length<=5){
+                document.getElementById("password_err").style.display="";
+            }
+            else{
+                document.getElementById("password_err").style.display="none";
+            }
+                      }
+    document.getElementById("reg_btn").onclick=function () {
+            //1.获取控件数据
+            let username=document.getElementById("username");
+            let password=document.getElementById("password");
+            let checkcode=document.getElementById("checkCode");
+            var usernamevar=username.value;
+            var passwordvar=password.value;
+            var checkcodevar=checkcode.value;
+            if(usernamevar=="" || passwordvar=="" || checkcodevar==""){
+                alert("请输入所有信息且不能为空，否则不能注册！")
+
+                reloadImg();
+            }
+
+            else{
+               // var params="username="+usernamevar+"&password="+passwordvar+"&checkcode="+checkcodevar;
+                let config={headers:{'Content-Type':'multipart/form-data,charset=UTF-8'},};
+                var data=new FormData();
+                data.append("username",usernamevar);
+                data.append("password",passwordvar);
+                data.append("checkcode",checkcodevar);
+                //使用axiso发送请求处理响应
+                axios({
+                    method: 'post',
+                    url: 'http://localhost:8080/fruitmarket/user/register',
+                    data: data
+                }).then(function (response) {
+                    if(response.status==200){
+                        if(response.data=="ok"){
+                            username.value="";
+                            password.value="";
+                            checkcode.value="";
+                            reloadImg();
+                            alert("注册成功，请登录系统!")
+                            window.location.href="login.html"
+                        }if(response.data=="err1"){
+                            username.value="";
+                            password.value="";
+                            checkcode.value="";
+                            reloadImg();
+                            alert("注册失败，请重新注册!")
+                        }if(response.data=="err2"){
+                            username.value="";
+                            password.value="";
+                            checkcode.value="";
+                            reloadImg();
+                            alert("用户名已存在，请重新输入！")
+                        }if(response.data=="err3"){
+                            alert("验证码输入错误!");
+                            checkcode.value="";
+                            reloadImg();
+                        }
+                    }
+                });}
+
+
+    }
+        function reloadImg(){
+            var time = new Date().getTime();
+            document.getElementById("checkImg").src="user/checkCodeImage?d="+time;
+
+        }
+
+</script>
+</body>
+</html>

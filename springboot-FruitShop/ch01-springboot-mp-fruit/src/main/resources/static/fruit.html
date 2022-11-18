@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>水果主界面</title>
+    <script src="js/axios.js"></script>
+    <style>
+
+         .el-header, .el-footer {
+             background-color: #B3C0D1;
+             color: #333;
+             text-align: center;
+             line-height: 60px;
+         }
+
+        .el-aside {
+            background-color: #D3DCE6;
+            color: #333;
+            text-align: center;
+
+        }
+
+        .el-main {
+            background-color: #E9EEF3;
+            color: #333;
+            text-align: center;
+
+        }
+
+        body > .el-container {
+            margin-bottom: 40px;
+        }
+
+        .el-container:nth-child(5) .el-aside,
+        .el-container:nth-child(6) .el-aside {
+            line-height: 260px;
+        }
+
+        .el-container:nth-child(7) .el-aside {
+            line-height: 320px;
+        }
+        .bot{ margin-bottom: 10px;}
+         .el-header {
+             background-color: #c5dbcf;
+             color: #333;
+             text-align: center;
+             line-height: 60px;
+         }
+
+
+        .el-main {
+            background-color: #E9EEF3;
+            color: #333;
+            text-align: center;
+
+        }
+        .demo-form-inline{
+            width: 80%;
+            display:flex;
+            justify-content:flex-start;
+
+        }
+    </style>
+
+
+</head>
+<body>
+<div id="app">
+
+
+    <el-container>
+        <el-header>水果信息界面</el-header>
+        <el-main>
+            <el-row>
+                <el-col :span="22"><div class="grid-content">
+
+                        <el-form :inline="true" :model="formInline" class="demo-form-inline">
+                            <el-form-item label="水果编号">
+                                <el-input v-model="formInline.number" placeholder="水果编号" width="10%" ></el-input>
+                            </el-form-item>
+                            <el-form-item label="水果名称">
+                                <el-input v-model="formInline.fruitname" placeholder="水果名称" width="10%"></el-input>
+                            </el-form-item>
+                            <el-form-item label="计价单位">
+                                <el-input v-model="formInline.unit" placeholder="计价单位" width="10%"></el-input>
+                            </el-form-item>
+                            <el-form-item label="水果价格">
+                                <el-input v-model="formInline.minp" placeholder="最小值" width="10%"></el-input>
+                                <el-input v-model="formInline.maxp" placeholder="最大值" width="10%"></el-input>
+                            </el-form-item>
+                            <el-form-item>
+                                <el-button type="primary" @click="onSubmit">查询</el-button>
+                            </el-form-item>
+                        </el-form>
+
+                </div></el-col>
+                <el-col :span="2"><div class="grid-content" align="right">
+
+                  <el-button type="success" @click="outlogin">退出系统</el-button>
+
+                </div></el-col>
+            </el-row>
+
+
+
+                <div class="bot" align="left" >
+                    <el-button type="danger" icon="el-icon-remove-outline" @click="delmuchfruit">批量删除</el-button>
+                    <el-button type="primary" icon="el-icon-circle-plus-outline" @click="dialogFormVisible = true">添加</el-button>
+                    <el-button type="danger"  @click="daochu">导出</el-button>
+
+                    <el-dialog title="添加水果信息" :visible.sync="dialogFormVisible" algin="right">
+                        <el-form :model="form"  :rules="rules" ref="ruleFrom" >
+                            <el-form-item label="水果编号" :label-width="formLabelWidth" prop="number" >
+                                <el-input v-model="form.number" autocomplete="off"></el-input>
+                            </el-form-item>
+                            <el-form-item label="水果名称" :label-width="formLabelWidth" prop="fruitname">
+                                <el-input v-model="form.fruitname" autocomplete="off"></el-input>
+                            </el-form-item>
+                            <el-form-item label="单价（元）" :label-width="formLabelWidth" prop="price">
+                                <el-input v-model="form.price" autocomplete="off"></el-input>
+                            </el-form-item>
+                            <el-form-item label="计价单位" :label-width="formLabelWidth" prop="unit">
+                                <el-input v-model="form.unit" autocomplete="off"></el-input>
+                            </el-form-item>
+                        </el-form>
+                        <div slot="footer" class="dialog-footer">
+                            <el-button type="primary" @click="addfruit">确 定</el-button>
+                            <el-button  type="danger" @click="dialogFormVisible = false">取 消</el-button>
+                        </div>
+                    </el-dialog>
+                </div>
+
+                <div align="center">
+                    <template>
+                        <el-table
+                                height="440"
+                                :data="fruits.slice((currentPage - 1) * pageSize, currentPage * pageSize)"
+                                style="width: 100%"
+                                @selection-change="handleSelectionChange">
+                            <el-table-column
+                                    type="selection"
+                                    width="60"
+                            >
+                            </el-table-column>
+                            <el-table-column
+
+                                    type="index"
+                                    width="50"
+                                    label="序号"
+                            >
+                            </el-table-column>
+                            <el-table-column
+                                    prop="number"
+                                    label="水果编号"
+                                   >
+                            </el-table-column>
+                            <el-table-column
+                                    prop="fruitname"
+                                    label="水果名称"
+                                   >
+                            </el-table-column>
+                            <el-table-column
+                                    prop="price"
+                                    label="单价（元）"
+                                    >
+                            </el-table-column>
+                            <el-table-column
+                                    prop="unit"
+                                    label="计价单位"
+                                   >
+                            </el-table-column>
+                            <el-table-column
+                                    label="操作"
+                            >
+                                <template slot-scope="fruitData">
+                                <el-button type="primary" icon="el-icon-edit" circle @click="upfruit(fruitData.row)" ></el-button>
+                                <!--修改按钮-->
+
+                                <el-button  type="danger" icon="el-icon-delete" circle @click="delfruit(fruitData.row.number)"></el-button>
+                                <!--删除按钮-->
+                                </template>
+                            </el-table-column>
+
+
+                        </el-table>
+                    </template><!--修改水果信息-->
+                    <el-dialog title="修改水果信息" :visible.sync="upfruitVisible" algin="right">
+                        <el-form :model="upform"  :rules="rules" ref="ruleFrom" >
+                            <el-form-item label="水果编号" :label-width="formLabelWidth" prop="number" >
+                                <el-input v-model="upform.number" autocomplete="off" readonly="true"></el-input>
+                            </el-form-item>
+                            <el-form-item label="水果名称" :label-width="formLabelWidth" prop="fruitname">
+                                <el-input v-model="upform.fruitname" autocomplete="off"></el-input>
+                            </el-form-item>
+                            <el-form-item label="单价（元）" :label-width="formLabelWidth" prop="price">
+                                <el-input v-model="upform.price" autocomplete="off"></el-input>
+                            </el-form-item>
+                            <el-form-item label="计价单位" :label-width="formLabelWidth" prop="unit">
+                                <el-input v-model="upform.unit" autocomplete="off"></el-input>
+                            </el-form-item>
+                        </el-form>
+                        <div slot="footer" class="dialog-footer">
+                            <el-button type="primary" @click="upupup">修 改</el-button>
+                            <el-button  type="danger" @click="nonono">取 消</el-button>
+                        </div>
+                    </el-dialog>
+                </div>
+                <div class="block">
+                    <el-pagination
+                            @size-change="handleSizeChange"
+                            @current-change="handleCurrentChange"
+                            :current-page="1"
+                            :page-sizes="[3, 4, 5, 6, 7 ]"
+                            :pager-count="10"
+                            :page-size="5"
+                            layout="total, sizes, prev, pager, next, jumper"
+                            :total="fruits.length">
+                    </el-pagination>
+                </div>
+
+
+        </el-main>
+    </el-container>
+
+</div>
+
+<script src="js/vue.js"></script>
+<script src="webapp/element-ui/lib/index.js"></script>
+<link rel="stylesheet" href="webapp/element-ui/lib/theme-chalk/index.css">
+
+<script>
+
+
+    new Vue({
+        el: "#app",
+
+        data() {
+            return {
+
+                fruits: [] ,<!--表格中的参数-->
+                fruitrow: [],<!--表格中一行的参数-->
+                formInline: {<!--查询中的参数-->
+                    number:'',
+                    fruitname:"",
+                    minp:'',
+                    maxp:'',
+                    unit:'',
+                },
+                dialogTableVisible: false,
+                dialogFormVisible: false,
+                upfruitVisible: false,
+                upFormVisible: false,
+                form: {<!--添加对话框中的参数-->
+                    number:'',
+                    fruitname:"",
+                    price:'',
+                    unit:'',
+                    date1: '',
+                    date2: '',
+                    delivery: false,
+                    type: {},
+                    resource: '',
+                    desc: ''
+                },
+                upform: {<!--修改对话框中的参数-->
+                    number:'',
+                    fruitname:"",
+                    price:'',
+                    unit:'',
+                    date1: '',
+                    date2: '',
+                    delivery: false,
+                    type: {},
+                    resource: '',
+                    desc: ''
+                },
+                formLabelWidth: '15%',
+
+                 rules: {
+                    number:[{required:true,message:'请输入水果编号',trigger:'blur'}],
+                    fruitname:[{required:true,message:'请输入水果名称',trigger:'blur'}],
+                    price:[{required:true,message:'请输入水果单价（元）',trigger:'blur'}],
+                    unit:[{required:true,message:'请输入计价单位',trigger:'blur'}],
+                 },
+                selectednumbers: [],<!--批量删除Id-->
+                multipleSelection: [],<!--批量删除Id数组-->
+                currentPage: 1, // 当前页码
+                total: 0, // 总条数
+                pageSize: 5, // 每页的数据条数
+            };
+
+        },
+        methods: {
+            daochu(){
+              axios(
+                  {
+                      method:"get",
+                      url:"http://localhost:8080/fruitmarket/fruit/dao"
+                  }).then(function (resp) {
+                  if(resp.data=="ok") {
+                      _this.$message({
+                          showClose: true,
+                          message: '导出成功',
+                          type: 'success'
+                      });
+                  }
+              })
+            },
+
+            Select() {
+                var _this = this;
+                axios({
+                    method:"get",
+                    url:"http://localhost:8080/fruitmarket/fruit/select"
+                }).then(function (resp)
+                {
+                    _this.fruits = resp.data;
+                })
+            },
+            handleSizeChange(val) {
+                //console.log(`每页 ${val} 条`);
+                this.currentPage = 1;
+                this.pageSize = val;
+            },
+            //当前页改变时触发 跳转其他页
+            handleCurrentChange(val) {
+                //console.log(`当前页: ${val}`);
+                this.currentPage = val;
+            },
+
+            addfruit(){<!--添加水果-->
+                var _this=this;
+                let config={headers:{'Content-Type':'multipart/form-data,charset=UTF-8'},};
+                var data=new FormData();
+                data.append("number",_this.form.number);
+                data.append("fruitname",_this.form.fruitname);
+                data.append("price",_this.form.price);
+                data.append("unit",_this.form.unit);
+                if(data.get("number")==""||data.get("fruitname")==""||data.get("price")==""||data.get("unit")=="")
+                {
+                    _this.$message({
+                        showClose: true,
+                        message: '请输入所有信息',
+                        type: 'error'
+                    });
+                }
+                else{
+                    axios({
+                    method:"post",
+                    url:"http://localhost:8080/fruitmarket/fruit/addfruit",
+                    data:data
+                }).then(function (resp)
+                {
+                    if(resp.data=="ok"){
+                        _this.Select();
+                        _this.dialogTableVisible =false;
+                        _this.form.number="";
+                        _this.form.fruitname="";
+                        _this.form.price="";
+                        _this.form.unit="";
+                        _this.$message({
+                            showClose: true,
+                            message: '添加水果成功',
+                            type: 'success'
+                        });
+                    }
+                    else if(resp.data=="err1"){
+                        _this.$message({
+                            showClose: true,
+                            message: '添加水果失败',
+                            type: 'error'
+                        });
+
+                    }
+                    else if(resp.data=="err2"){
+
+                        _this.$message({
+                            showClose: true,
+                            message: '该水果已存在',
+
+                        });
+                    }
+
+                })}
+
+            },
+            delfruit(number){<!--删除水果-->
+                var _this=this;
+                var delf=confirm("是否确认删除该水果！");
+                if(delf){
+                    let config={headers:{'Content-Type':'multipart/form-data,charset=UTF-8'},};
+                    var data=new FormData();
+                    data.append("number",number);
+
+                    axios({
+                        method:"post",
+                        url:"http://localhost:8080/fruitmarket/fruit/delfruit",
+                        data:data
+                    }).then(function (resp)
+                    {
+                        if(resp.data=="ok"){
+
+                            _this.Select();
+                            _this.$message({
+                                showClose: true,
+                                message: '删除成功',
+                                type: 'success'
+                            });
+
+                        }
+
+                        else if(resp.data=="err1"){
+                            _this.$message({
+                                showClose: true,
+                                message: '删除成功失败',
+                                type: 'error'
+                            });
+                        }
+                    })
+
+                }
+
+            },
+            upupup(){<!--修改水果对话框里面的修改-->
+                var _this=this;
+                var delf=confirm("是否修改该水果信息！");
+                if(delf){
+                    let config={headers:{'Content-Type':'multipart/form-data,charset=UTF-8'},};
+                    var data=new FormData();
+                    data.append("number",_this.upform.number);
+                    data.append("fruitname",_this.upform.fruitname);
+                    data.append("price",_this.upform.price);
+                    data.append("unit",_this.upform.unit);
+                    axios({
+                        method:"post",
+                        url:"http://localhost:8080/fruitmarket/fruit/upfruit",
+                        data:data
+                    }).then(function (resp)
+                    {
+                        if(resp.data=="ok"){
+
+                            _this.upfruitVisible=false;
+                            _this.Select();
+                            _this.$message({
+                                showClose: true,
+                                message: '修改成功',
+                                type: 'success'
+                            });
+                        }
+                        else if(resp.data=="err1"){
+
+                            _this.$message({
+                                showClose: false,
+                                message: '修改失败',
+                                type: 'error'
+                            });
+
+                        }
+                    })
+
+                }
+            },
+            nonono(){<!--修改水果对话框里面的取消-->
+                var _this=this;
+                _this.upfruitVisible=false;
+            },
+            upfruit(row){<!--修改水果信息按钮，跳出对话框，水果编号不能修改-->
+                var _this=this;
+
+                _this.upform.number=row.number;
+                _this.upform.fruitname=row.fruitname;
+                _this.upform.price=row.price;
+                _this.upform.unit=row.unit;
+                _this.upfruitVisible=true;
+
+
+            },
+            onSubmit(){<!--查询按钮事件-->
+                var _this=this;
+                if(_this.formInline.number!=""&&_this.formInline.fruitname==""&&_this.formInline.unit==""&&_this.formInline.minp==""&&_this.formInline.maxp==""){
+
+                    var a=_this.formInline.number;
+                    axios({
+                        method:"get",
+                        url:"http://localhost:8080/fruitmarket/fruit/selectnumber?number="+a,
+
+                    }).then(function (resp)
+                    {
+                        _this.$message({
+                            showClose: true,
+                            message: '查询成功',
+                            type: 'success'
+                        });
+                        _this.formInline.number="";
+                        _this.fruits = resp.data;
+                    })
+
+                }else if(_this.formInline.number==""&&_this.formInline.fruitname!=""&&_this.formInline.unit==""&&_this.formInline.minp==""&&_this.formInline.maxp==""){
+                    var a=_this.formInline.fruitname;
+                    axios({
+                        method:"get",
+                        url:"http://localhost:8080/fruitmarket/fruit/selectfruitname?fruitname="+a,
+                        data:data
+                    }).then(function (resp)
+                    {
+                        _this.$message({
+                            showClose: true,
+                            message: '查询成功',
+                            type: 'success'
+                        });
+                        _this.formInline.fruitname="";
+                        _this.fruits = resp.data;
+                    })
+                }
+                else if(_this.formInline.number==""&&_this.formInline.fruitname==""&&_this.formInline.unit!=""&&_this.formInline.minp==""&&_this.formInline.maxp==""){
+                    var a=_this.formInline.unit;
+                    axios({
+                        method:"get",
+                        url:"http://localhost:8080/fruitmarket/fruit/selectunit?unit="+a,
+                        data:data
+                    }).then(function (resp)
+                    {
+                        _this.$message({
+                            showClose: true,
+                            message: '查询成功',
+                            type: 'success'
+                        });
+                        _this.formInline.unit="";
+                        _this.fruits = resp.data;
+                    })
+                }
+                else if(_this.formInline.number==""&&_this.formInline.fruitname==""&&_this.formInline.unit==""&&_this.formInline.minp!=""&&_this.formInline.maxp!=""){
+                    let config={headers:{'Content-Type':'multipart/form-data,charset=UTF-8'},};
+                    var data=new FormData();
+                    data.append("min",_this.formInline.minp);
+                    data.append("max",_this.formInline.maxp);
+                    var a=_this.formInline.minp;
+                    var b=_this.formInline.maxp;
+                    axios({
+                        method:"get",
+                        url:"http://localhost:8080/fruitmarket/fruit/selectprice?min="+a+"&max="+b,
+                        data:data
+                    }).then(function (resp)
+                    {
+                        _this.$message({
+                            showClose: true,
+                            message: '查询成功',
+                            type: 'success'
+                        });
+                        _this.formInline.minp="";
+                        _this.formInline.maxp="";
+                        _this.fruits = resp.data;
+                    })
+                }else if((_this.formInline.number==""&&_this.formInline.fruitname==""&&_this.formInline.unit==""&&_this.formInline.minp==""&&_this.formInline.maxp==""))
+                {
+                    _this.Select();
+                    _this.$message({
+                        showClose: true,
+                        message: '查询成功',
+                        type: 'success'
+                    });
+                }else {
+                    var number = _this.formInline.number;
+                    var name = _this.formInline.fruitname;
+                    var unit = _this.formInline.unit;
+                    var a = _this.formInline.minp;
+                    var b = _this.formInline.maxp;
+                    axios({
+                        method: "get",
+                        url: "http://localhost:8080/fruitmarket/fruit/selectList?number=" + number + "&fruitname=" + name + "&unit=" + unit + "&min=" + a + "&max=" + b,
+                        data: data
+                    }).then(function (resp) {
+                        _this.$message({
+                            showClose: true,
+                            message: '查询成功',
+                            type: 'success'
+                        });
+                        _this.formInline.minp = "";
+                        _this.formInline.maxp = "";
+                        _this.fruits = resp.data;
+                    })
+                }
+            },
+            handleSelectionChange(val){//获取批量删除的Id
+                this.multipleSelection=val;
+                console.log(val);
+            },
+            delmuchfruit(){//批量删除水果信息
+
+                var _this=this;
+                if(_this.multipleSelection.length<=0){
+                    _this.$message({
+                        showClose: true,
+                        message: '请勾选多选框',
+                        type: 'success'
+                    });
+                }else{
+                    for (let i = 0; i < _this.multipleSelection.length; i++)
+                {
+                    var selectionElement = _this.multipleSelection[i];
+                    _this.selectednumbers[i] = selectionElement.number;
+                }
+                    axios({
+                        method: 'get',
+                        url: 'http://localhost:8080/fruitmarket/fruit/delmuchfruit?number='+_this.selectednumbers,
+
+                    }).then(function (response) {
+                        if(response.status==200){
+                            if(response.data=="ok"){
+                                _this.Select();
+                                _this.$message({
+                                    showClose: true,
+                                    message: '批量删除成功',
+                                    type: 'success'
+                                });
+                            }else if(response.data=="no"){
+                                _this.Select();
+                                _this.$message({
+                                    showClose: false,
+                                    message: '批量删除失败',
+                                    type: 'error'
+                                });
+                            }
+                        }
+                    });
+
+                }
+
+
+
+            },
+            outlogin(){
+                var one=confirm("是否确认退出登录！");
+                axios({
+                    method: 'get',
+                    url: 'http://localhost:8080/fruitmarket/user/outLogin?resoult='+one,
+                }).then(function (response) {
+                    if(response.status==200){
+                        if(response.data=="yes"){
+                            window.location.href="login.html";
+                        }
+
+                    }
+                });
+            },
+
+        },
+        mounted(){
+        this.Select();
+
+
+        },
+
+
+
+    });
+
+
+</script>
+</body>
+</html>
